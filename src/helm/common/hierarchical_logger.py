@@ -34,22 +34,26 @@ class HierarchicalLogger(object):
     def indent(self) -> str:
         return "  " * len(self.start_times)
 
-    def track_begin(self, x: Any) -> None:
-        self.logger.info(self.indent() + str(x) + " {")
+    def track_begin(self, x: Any, **kwargs) -> None:
+        kwargs['stacklevel'] = kwargs.get('stacklevel', 1) + 1
+        self.logger.info(self.indent() + str(x) + " {", **kwargs)
         sys.stdout.flush()
         self.start_times.append(time.time())
 
-    def track_end(self) -> None:
+    def track_end(self, **kwargs) -> None:
+        kwargs['stacklevel'] = kwargs.get('stacklevel', 1) + 1
         t = time.time() - self.start_times.pop()
-        self.logger.info(self.indent() + "} [%s]" % (format_time(t)))
+        self.logger.info(self.indent() + "} [%s]" % (format_time(t)), **kwargs)
         sys.stdout.flush()
 
-    def log(self, x: Any) -> None:
-        self.logger.info(self.indent() + str(x))
+    def log(self, x: Any, **kwargs) -> None:
+        kwargs['stacklevel'] = kwargs.get('stacklevel', 1) + 1
+        self.logger.info(self.indent() + str(x), **kwargs)
         sys.stdout.flush()
 
-    def warn(self, x: Any) -> None:
-        self.logger.warning(self.indent() + str(x))
+    def warn(self, x: Any, **kwargs) -> None:
+        kwargs['stacklevel'] = kwargs.get('stacklevel', 1) + 1
+        self.logger.warning(self.indent() + str(x), **kwargs)
         sys.stdout.flush()
 
 
@@ -69,12 +73,14 @@ singleton = HierarchicalLogger()
 # Exposed public methods
 
 
-def hlog(x: Any) -> None:
-    singleton.log(x)
+def hlog(x: Any, **kwargs) -> None:
+    kwargs['stacklevel'] = kwargs.get('stacklevel', 1) + 1
+    singleton.log(x, **kwargs)
 
 
-def hwarn(x: Any) -> None:
-    singleton.warn(x)
+def hwarn(x: Any, **kwargs) -> None:
+    kwargs['stacklevel'] = kwargs.get('stacklevel', 1) + 1
+    singleton.warn(x, **kwargs)
 
 
 class htrack_block:
@@ -82,10 +88,10 @@ class htrack_block:
         self.x = x
 
     def __enter__(self) -> None:
-        singleton.track_begin(self.x)
+        singleton.track_begin(self.x, stacklevel=2)
 
     def __exit__(self, tpe: Any, value: Any, callback: Any) -> None:
-        singleton.track_end()
+        singleton.track_end(stacklevel=2)
 
 
 class htrack:
@@ -127,7 +133,7 @@ def setup_default_logging():
     Setup a default logger to STDOUT for HELM via Python logging
     """
     formatter = ColoredFormatter(
-        "%(bold_black)s%(asctime)s%(reset)s %(log_color)s%(levelname)-8s%(reset)s %(message)s",
+        "%(bold_black)s%(asctime)s%(reset)s %(log_color)s%(levelname)-8s%(reset)s %(pathname)s:%(lineno)d %(funcName)s: %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S",
         reset=True,
         log_colors={
