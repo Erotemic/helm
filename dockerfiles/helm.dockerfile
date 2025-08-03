@@ -78,6 +78,8 @@ EOF
 # Control which python version we are using
 ARG PYTHON_VERSION=3.10
 
+ENV UV_COMPILE_BYTECODE=1
+
 ENV PIP_ROOT_USER_ACTION=ignore
 
 RUN --mount=type=cache,target=/root/.cache <<EOF
@@ -142,7 +144,7 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 
 # ---------------------------------
-# Step 5: Checkout and install HELM
+# Step 5: Checkout and install REPO
 # ---------------------------------
 # Based on the state of the repo this copies the host .git data over and then
 # checks out the exact version of HELM requested by HELM_GIT_HASH. It then
