@@ -1,0 +1,49 @@
+{
+  "name": "helm-secure-uv-py313",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  "containerEnv": {
+    "DEBIAN_FRONTEND": "noninteractive",
+
+    "UV_CACHE_DIR": "/workspaces/${localWorkspaceFolderBasename}/.devcontainer-state/uv-cache",
+    "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+
+  "runArgs": [
+    "--init",
+    "--cap-drop=ALL",
+    "--security-opt=no-new-privileges",
+    "--pids-limit=512",
+    "--tmpfs=/tmp:rw,noexec,nosuid,size=1g"
+  ],
+
+  "postCreateCommand": "bash -lc 'bash .devcontainer/scripts/post-create.sh'",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "redhat.vscode-yaml",
+        "editorconfig.editorconfig",
+        "charliermarsh.ruff",
+        "GitHub.vscode-pull-request-github",
+        "github.vscode-github-actions",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+      ]
+    }
+  }
+}
