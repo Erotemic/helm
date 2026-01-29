@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1.5
-FROM ghcr.io/aiq-kitware/uv:latest-python3.13
+ARG BASE_IMAGE=ghcr.io/aiq-kitware/uv:latest-python3.13
+FROM ${BASE_IMAGE} AS base
 
 # Keep the same convention as your base image: login shell semantics
 SHELL ["/bin/bash", "-l", "-c"]
@@ -26,7 +27,8 @@ DEBIAN_FRONTEND=noninteractive apt install -q -y --no-install-recommends \
     ripgrep \
     bash-completion \
     build-essential \
-    pkg-config
+    pkg-config \
+    sudo 
 EOF
 
 # ------------------------------------
@@ -41,6 +43,11 @@ fi
 mkdir -p /workspaces
 chown -R vscode:vscode /workspaces
 EOF
+
+
+# Allow passwordless sudo for vscode
+RUN echo "vscode ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/010-vscode-nopasswd \
+  && chmod 0440 /etc/sudoers.d/010-vscode-nopasswd
 
 # ------------------------------------
 # Step 3: Make uv available to ALL users
@@ -115,6 +122,7 @@ chown vscode:vscode "${VSCODE_HOME}/.bashrc" "${VSCODE_HOME}/.profile" "${VSCODE
 EOF
 
 USER vscode
+
 WORKDIR /workspaces
 
 ################
@@ -122,6 +130,7 @@ WORKDIR /workspaces
 ################
 RUN <<EOF
 echo '
+docker buildx build   --load   -f .devcontainer/uv.dockerfile   -t uv:local   .
 docker buildx build   --load   -f .devcontainer/Dockerfile   -t helm-devcontainer:test   .
 '
 EOF
